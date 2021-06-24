@@ -1,30 +1,27 @@
-const express = require('express'),
-  app = express(),
-  http = require('http').createServer(app),
-  io = require('socket.io')(http)
+const express = require("express");
+const socket = require("socket.io");
 
 // App setup
-const HOST = '127.0.0.1'
-const PORT = 3080
+const PORT = 3080;
+const app = express();
+const server = app.listen(PORT, function () {
+    console.log(`Listening on port ${PORT}`);
+    console.log(`http://localhost:${PORT}`);
+});
 
-let clients = []
+// Socket setup
+const io = socket(server, {
+    cors: {
+      origin: `http://localhost:3000`,
+      credentials: true
+    }
+  });
 
-io.on('connection', (socket) => {
-  console.log(`Client with id ${socket.id} connected`)
-  clients.push(socket.id)
+io.on("connection", function (socket) {
+  console.log("Made socket connection");
+  socket.emit("hello", "world");
 
-  socket.emit('message', "I'm server")
-
-  socket.on('message', (message) =>
-    console.log('Message: ', message)
-  )
-
-  socket.on('disconnect', () => {
-    clients.splice(clients.indexOf(socket.id), 1)
-    console.log(`Client with id ${socket.id} disconnected`)
-  })
-})
-
-http.listen(PORT, HOST, () =>
-  console.log(`Server listens http://${HOST}:${PORT}`)
-)
+  socket.on("magic", (arg) => {
+    console.log(arg);
+  });
+});
