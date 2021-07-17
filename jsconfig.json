@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "model/*": ["src/model/*"],
+    }
+  },
+  "exclude": ["node_modules", "out", ".idea", ".vscode"]
+}

@@ -1,7 +1,7 @@
 const express = require("express");
 const socket = require("socket.io");
 
-const carModel = require("./model/car/service");
+const CarModel = require("./model/car");
 
 // App setup
 const PORT = 3080;
@@ -10,7 +10,7 @@ const server = app.listen(PORT, function () {
     console.log(`Listening on port ${PORT}`);
     console.log(`http://localhost:${PORT}`);
 });
-const car = new carModel.service.CarService();
+const car = new CarModel.services.CarService();
 
 // Socket setup
 const io = socket(server, {

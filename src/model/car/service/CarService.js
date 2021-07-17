@@ -5,8 +5,6 @@ class CarService {
         this.car = new five.Board()
         this.speed = 0
         this.direction = undefined
-
-        bind(this)
     }
 
     async init() {
