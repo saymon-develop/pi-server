@@ -4,18 +4,26 @@ class CarService {
     constructor(opts) {
         this.car = new five.Board()
         this.speed = 0
+        this.turnMoment = 0
         this.direction = undefined
+        this.turn = undefined
+
+        this.init.bind(this)
+        this.start.bind(this)
+        this.stop.bind(this)
+        this.backward.bind(this)
+        this.turnRight.bind(this)
+        this.turnLeft.bind(this)
+        this.cancelTurning.bind(this)
     }
 
     async init() {
-        this.car.on("ready", function() {
-            this.right = new five.Motor({pins: {pwm: 9, dir: 8}, invertPWM });
-            this.left = new five.Motor({pins: {pwm: 6, dir: 7}, invertPWM });
+        const context = this
 
-            this.car.repl.inject({ 
-                right: this.right, 
-                left: this.left 
-            });
+        this.car.on("ready", function() {
+            context.right = new five.Motor({pins: {pwm: 9, dir: 8}, invertPWM: true })
+            context.left = new five.Motor({pins: {pwm: 6, dir: 7}, invertPWM: true })
+            console.log('Car: Init')
         })
     }
 
@@ -23,9 +31,11 @@ class CarService {
      * 
      * @param {number} speed - [0 - 255]
      */
-    async start(speed) {
-        if(speed === 0) {this.stop()}
+    async start(speed) {        
         if(speed > 0) {
+            console.log('Car: Run forward')
+            if(this.speed > 0 && this.speed !== speed && this.direction) { this.stop() }
+
             this.right.start(speed)
             this.left.start(speed)
             this.speed = speed
@@ -38,6 +48,7 @@ class CarService {
         this.left.stop()
         this.speed = 0
         this.direction = undefined
+        console.log('Car: Stop')
     }
 
     /**
@@ -45,11 +56,13 @@ class CarService {
      * @param {number} speed - [0 - 255]
      */
     async backward(speed) {
-        this.stop()
         if(speed > 0) {
+            console.log('Car: Run backward')
+            if(this.speed > 0 && this.speed !== speed && this.direction) { this.stop() }
+
             this.right.reverse(speed)
             this.left.reverse(speed)
-            this.speed = 0
+            this.speed = speed
             this.direction = 'backward'
         }
     }
@@ -60,9 +73,15 @@ class CarService {
      */
     async turnRight(moment) {
         if(this.speed > 0 && moment > 0) {
+            console.log('Car: Turn right')
+            if(this.turnMoment > 0 && this.turnMoment !== moment && this.turn) { 
+                this.cancelTurning()
+                this.stop()
+            }
+
             this.right.start(Math.abs(this.speed / moment) + 5)
             this.left.start(moment)
-            this.direction = 'right'
+            this.turn = 'right'
         }
     }
 
@@ -72,14 +91,29 @@ class CarService {
      */
     async turnLeft(moment) {
         if(this.speed > 0 && moment > 0) {
+            console.log('Car: Turn left')
+            if(this.turnMoment > 0 && this.turnMoment !== moment && this.turn) { 
+                this.cancelTurning()
+                this.stop()
+            }
+
+            this.turnMoment = moment
             this.left.start(Math.abs(this.speed / moment) + 5)
             this.right.start(moment)
-            this.direction = 'left'
+            this.turn = 'left'
         }
     }
 
     async cancelTurning() {
-        this.start(this.speed)
+        this.turn = undefined
+        this.turnMoment = 0
+        console.log('Car: Cancel turning')
+
+        if(this.direction === 'forward') {
+            this.start(this.speed)
+        } else if (this.direction === 'backward') {
+            this.backward(this.speed)
+        }
     }
 }
 

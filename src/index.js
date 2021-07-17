@@ -11,6 +11,7 @@ const server = app.listen(PORT, function () {
     console.log(`http://localhost:${PORT}`);
 });
 const car = new CarModel.services.CarService();
+car.init();
 
 // Socket setup
 const io = socket(server, {
@@ -23,7 +24,6 @@ const io = socket(server, {
 io.on("connection", function (socket) {
   console.log("Made socket connection");
   socket.emit("bootstrap", "WS:connection - success connected to the server");
-  car.init();
 
   socket.on("forward", (arg) => {
     console.log("forward");
