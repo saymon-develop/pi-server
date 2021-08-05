@@ -22,7 +22,7 @@ const server = app.listen(PORT, function () {
       // Socket setup
       const io = socket(server, {
         cors: {
-          origin: `http://192.168.0.111:3080`,
+          origin: `http://192.168.0.111`,
           credentials: true
         }
       });
