@@ -1,5 +1,6 @@
 const express = require("express");
 const socket = require("socket.io");
+const five = require('johnny-five')
 
 const CarModel = require("./model/car");
 
@@ -9,52 +10,48 @@ const app = express();
 const server = app.listen(PORT, function () {
     console.log(`Listening on port ${PORT}`);
     console.log(`http://localhost:${PORT}`);
-});
-const car = new CarModel.services.CarService();
-car.init();
 
-// Socket setup
-const io = socket(server, {
-    cors: {
-      origin: `http://localhost:3000`,
-      credentials: true
-    }
-  });
+    const car = new five.Board();
 
-io.on("connection", function (socket) {
-  console.log("Made socket connection");
-  socket.emit("bootstrap", "WS:connection - success connected to the server");
+    car.on("ready", ()=> {
+      const rightMotor = new five.Motor({pins: {pwm: 9, dir: 8}, invertPWM: true })
+      const leftMotor = new five.Motor({pins: {pwm: 6, dir: 7}, invertPWM: true })
+      const carManipulator = new CarModel.services.CarService({right: rightMotor, left: leftMotor})
+      console.log('Car: Init');
 
-  socket.on("forward", (arg) => {
-    console.log("forward");
-    console.log("power", arg);
-    car.start(arg);
-  });
-  socket.on("backward", (arg) => {
-    console.log("backward");
-    console.log("power", arg);
-    car.backward(arg);
-  });
-  socket.on("stop", (arg) => {
-    console.log("stop");
-    console.log("power", arg);
-    car.stop();
-  });
-
-  
-  socket.on("left", (arg) => {
-    console.log("left");
-    console.log("power", arg);
-    car.turnLeft(arg);
-  });
-  socket.on("right", (arg) => {
-    console.log("right");
-    console.log("power", arg);
-    car.turnRight(arg);
-  });
-  socket.on("turn-stop", (arg) => {
-    console.log("turn-stop");
-    console.log(arg);
-    car.cancelTurning();
-  });
+      // Socket setup
+      const io = socket(server, {
+        cors: {
+          origin: `http://localhost:3000`,
+          credentials: true
+        }
+      });
+    
+      io.on("connection", function (socket) {
+        socket.emit("bootstrap", "WS:connection - success connected to the server");
+    
+        socket.on("forward", (arg) => {
+          console.log("forward", arg);
+          carManipulator.forward(arg);
+        });
+        socket.on("backward", (arg) => {
+          console.log("backward", arg);
+          carManipulator.backward(arg);
+        });
+        socket.on("stop", (arg) => {
+          console.log("stop", arg);
+          carManipulator.stop();
+        });
+    
+    
+        socket.on("left", (arg) => {
+          console.log("left", arg);
+          carManipulator.turnLeft(arg);
+        });
+        socket.on("right", (arg) => {
+          console.log("right", arg);
+          carManipulator.turnRight(arg);
+        });
+      });
+  })
 });

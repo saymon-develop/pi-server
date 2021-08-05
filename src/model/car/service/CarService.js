@@ -1,119 +1,67 @@
-const five = require('johnny-five')
-
 class CarService {
     constructor(opts) {
-        this.car = new five.Board()
-        this.speed = 0
-        this.turnMoment = 0
-        this.direction = undefined
-        this.turn = undefined
+        this.right = opts.right
+        this.left = opts.left
 
-        this.init.bind(this)
-        this.start.bind(this)
         this.stop.bind(this)
+        this.forward.bind(this)
         this.backward.bind(this)
         this.turnRight.bind(this)
         this.turnLeft.bind(this)
-        this.cancelTurning.bind(this)
-    }
-
-    async init() {
-        const context = this
-
-        this.car.on("ready", function() {
-            context.right = new five.Motor({pins: {pwm: 9, dir: 8}, invertPWM: true })
-            context.left = new five.Motor({pins: {pwm: 6, dir: 7}, invertPWM: true })
-            console.log('Car: Init')
-        })
-    }
-
-    /**
-     * 
-     * @param {number} speed - [0 - 255]
-     */
-    async start(speed) {        
-        if(speed > 0) {
-            console.log('Car: Run forward')
-            if(this.speed > 0 && this.speed !== speed && this.direction) { this.stop() }
-
-            this.right.start(speed)
-            this.left.start(speed)
-            this.speed = speed
-            this.direction = 'forward'
-        }
     }
 
     async stop() {
-        this.right.stop()
-        this.left.stop()
-        this.speed = 0
-        this.direction = undefined
+        this.right.stop(0)
+        this.left.stop(0)
         console.log('Car: Stop')
     }
 
     /**
-     * 
-     * @param {number} speed - [0 - 255]
+     * Go forward
      */
-    async backward(speed) {
-        if(speed > 0) {
-            console.log('Car: Run backward')
-            if(this.speed > 0 && this.speed !== speed && this.direction) { this.stop() }
+     async forward(speed = 255) {        
+        console.log('Car: Run forward', speed)
+        this.right.stop(0)
+        this.left.stop(0)
 
-            this.right.reverse(speed)
-            this.left.reverse(speed)
-            this.speed = speed
-            this.direction = 'backward'
-        }
+        this.right.fwd(speed)
+        this.left.fwd(speed)
     }
 
     /**
-     * 
-     * @param {number} moment - [0 - 50]
+     * Go back
      */
-    async turnRight(moment) {
-        if(this.speed > 0 && moment > 0) {
-            console.log('Car: Turn right')
-            if(this.turnMoment > 0 && this.turnMoment !== moment && this.turn) { 
-                this.cancelTurning()
-                this.stop()
-            }
+    async backward(speed = 255) {
+        console.log('Car: Run backward', speed)
+        this.right.stop(0)
+        this.left.stop(0)
 
-            this.right.start(Math.abs(this.speed / moment) + 5)
-            this.left.start(moment)
-            this.turn = 'right'
-        }
+        this.right.rev(speed)
+        this.left.rev(speed)
     }
 
     /**
-     * 
-     * @param {number} moment - [0 - 50]
+    * Turn car right
      */
-    async turnLeft(moment) {
-        if(this.speed > 0 && moment > 0) {
-            console.log('Car: Turn left')
-            if(this.turnMoment > 0 && this.turnMoment !== moment && this.turn) { 
-                this.cancelTurning()
-                this.stop()
-            }
+    async turnRight() {
+        console.log('Car: Turn right')
+        this.right.stop(0)
+        this.left.stop(0)
 
-            this.turnMoment = moment
-            this.left.start(Math.abs(this.speed / moment) + 5)
-            this.right.start(moment)
-            this.turn = 'left'
-        }
+        this.right.rev(255)
+        this.left.fwd(255)
     }
 
-    async cancelTurning() {
-        this.turn = undefined
-        this.turnMoment = 0
-        console.log('Car: Cancel turning')
+    /**
+     * Turn car left
+     */
+    async turnLeft() {
+        console.log('Car: Turn left')
+        this.right.stop(0)
+        this.left.stop(0)
 
-        if(this.direction === 'forward') {
-            this.start(this.speed)
-        } else if (this.direction === 'backward') {
-            this.backward(this.speed)
-        }
+        this.left.rev(255)
+        this.right.fwd(255)
     }
 }
 
